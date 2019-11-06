@@ -15,7 +15,7 @@
     "node": ">=8.10"
   },
   "bugs": {
-    "url": "https://github.com/facebook/create-react-app/issues"
+    "url": "https://github.com/WonderMediaProductions/create-react-app/issues"
   },
   "files": [
     "bin",
