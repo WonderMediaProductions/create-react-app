@@ -11,6 +11,8 @@
 const path = require('path');
 const fs = require('fs');
 const url = require('url');
+const findMonorepo = require('@wondermediaproductions/react-dev-utils/workspaceUtils')
+  .findMonorepo;
 
 // Make sure any symlinks in the project folder are resolved:
 // https://github.com/facebook/create-react-app/issues/637
@@ -93,6 +95,9 @@ module.exports = {
   servedPath: getServedPath(resolveApp('package.json')),
 };
 
+const useTemplate =
+  appDirectory === fs.realpathSync(path.join(__dirname, '..'));
+
 // @remove-on-eject-begin
 const resolveOwn = relativePath => path.resolve(__dirname, '..', relativePath);
 
@@ -121,17 +126,8 @@ module.exports = {
   ownTypeDeclarations: resolveOwn('lib/react-app.d.ts'),
 };
 
-const ownPackageJson = require('../package.json');
-const reactScriptsPath = resolveApp(`node_modules/${ownPackageJson.name}`);
-const reactScriptsLinked =
-  fs.existsSync(reactScriptsPath) &&
-  fs.lstatSync(reactScriptsPath).isSymbolicLink();
-
 // config before publish: we're in ./packages/react-scripts/config/
-if (
-  !reactScriptsLinked &&
-  __dirname.indexOf(path.join('packages', 'react-scripts', 'config')) !== -1
-) {
+if (useTemplate) {
   module.exports = {
     dotenv: resolveOwn('template/.env'),
     appPath: resolveApp('.'),
@@ -159,3 +155,14 @@ if (
 // @remove-on-eject-end
 
 module.exports.moduleFileExtensions = moduleFileExtensions;
+
+module.exports.srcPaths = [module.exports.appSrc];
+
+if (!useTemplate) {
+  // if app is in a monorepo (lerna or yarn workspace), treat other packages in
+  // the monorepo as if they are app source
+  const monorepo = findMonorepo(appDirectory);
+  if (monorepo.includes(appDirectory)) {
+    Array.prototype.push.apply(module.exports.srcPaths, monorepo.pkgs);
+  }
+}

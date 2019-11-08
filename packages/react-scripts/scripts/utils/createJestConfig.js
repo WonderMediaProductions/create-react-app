@@ -8,11 +8,12 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const chalk = require('@wondermediaproductions/react-dev-utils/chalk');
 const paths = require('../../config/paths');
 const modules = require('../../config/modules');
 
-module.exports = (resolve, rootDir, isEjecting) => {
+module.exports = (resolve, rootDir, srcRoots) => {
   // Use this instead of `paths.testsSetup` to avoid putting
   // an absolute filename into configuration after ejecting.
   const setupTestsMatches = paths.testsSetup.match(/src[/\\]setupTests\.(.+)/);
@@ -22,27 +23,23 @@ module.exports = (resolve, rootDir, isEjecting) => {
     ? `<rootDir>/src/setupTests.${setupTestsFileExtension}`
     : undefined;
 
+  const toRelRootDir = f => '<rootDir>/' + path.relative(rootDir || '', f);
+
   const config = {
-    roots: ['<rootDir>/src'],
+    roots: srcRoots.map(toRelRootDir),
 
     collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}', '!src/**/*.d.ts'],
 
-    setupFiles: [
-      isEjecting
-        ? 'react-app-polyfill/jsdom'
-        : require.resolve('react-app-polyfill/jsdom'),
-    ],
+    setupFiles: [require.resolve('react-app-polyfill/jsdom')],
 
     setupFilesAfterEnv: setupTestsFile ? [setupTestsFile] : [],
     testMatch: [
-      '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
-      '<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}',
+      '**/__tests__/**/*.{js,jsx,ts,tsx}',
+      '**/*.{spec,test}.{js,jsx,ts,tsx}',
     ],
     testEnvironment: 'jest-environment-jsdom-fourteen',
     transform: {
-      '^.+\\.(js|jsx|ts|tsx)$': isEjecting
-        ? '<rootDir>/node_modules/babel-jest'
-        : resolve('config/jest/babelTransform.js'),
+      '^.+\\.(js|jsx|ts|tsx)$': resolve('config/jest/babelTransform.js'),
       '^.+\\.css$': resolve('config/jest/cssTransform.js'),
       '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': resolve(
         'config/jest/fileTransform.js'
